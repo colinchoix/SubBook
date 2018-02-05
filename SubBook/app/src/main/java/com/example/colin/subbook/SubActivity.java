@@ -1,3 +1,13 @@
+/*SubActivity
+ *
+ * Version 1.0
+ *
+ * Feb 05, 2018
+ *
+ * Copyright 2018 Colin Choi, CMPUT301, University of Alberta - All Rights Reserved
+ *
+ */
+
 package com.example.colin.subbook;
 
 import android.app.Activity;
@@ -19,6 +29,14 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * Represents the sub activity for the app
+ * This is where information for a new subscription is passed in and validated
+ *
+ * @author cechoi
+ *
+ * @version 1.0
+ */
 public class SubActivity extends AppCompatActivity {
 
     private EditText subName;
@@ -28,7 +46,6 @@ public class SubActivity extends AppCompatActivity {
     private Date startDate;
     private String price;
     private String comment;
-
     private Context context = this;
     private Button subDate;
     private Calendar myCalendar = Calendar.getInstance();
@@ -36,8 +53,11 @@ public class SubActivity extends AppCompatActivity {
     private DatePickerDialog.OnDateSetListener date;
     private SimpleDateFormat sdf = new SimpleDateFormat(dateFormat, Locale.CANADA);
 
-
-
+    /**
+     * Called when activity is first created
+     *
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,34 +70,35 @@ public class SubActivity extends AppCompatActivity {
         subPrice = (EditText) findViewById(R.id.subPrice);
         subComment = (EditText) findViewById(R.id.subComment);
 
+        // This code is for when the user is editing a subscription
         Intent intent = getIntent();
         final String index = intent.getStringExtra("index");
-        if(index != null) {
-            String name =intent.getStringExtra("name");
-            String date=intent.getStringExtra("date");
-            String comment=intent.getStringExtra("comment");
+        //Checks if an index was pass in, meaning that user is trying to edit something
+        if (index != null) {
+            //Fills in the fields with the prexisting information
+            String name = intent.getStringExtra("name");
+            String date = intent.getStringExtra("date");
+            String comment = intent.getStringExtra("comment");
             String price = intent.getStringExtra("price");
             subName.setText(name);
             subPrice.setText(price);
             subComment.setText(comment);
             subDate.setText(date);
-
         }
 
-    //https://gist.github.com/gaara87/3607765
-        subPrice.setFilters(new InputFilter[] {
+        // Taken from https://gist.github.com/gaara87/3607765
+        // 2018-02-04
+        // Limits the number of deimals allowed in input
+        subPrice.setFilters(new InputFilter[]{
                 new DigitsKeyListener(Boolean.FALSE, Boolean.TRUE) {
                     int beforeDecimal = 5, afterDecimal = 2;
-
                     @Override
                     public CharSequence filter(CharSequence source, int start, int end,
                                                Spanned dest, int dstart, int dend) {
                         String temp = subPrice.getText() + source.toString();
-
                         if (temp.equals(".")) {
                             return "0.";
-                        }
-                        else if (temp.toString().indexOf(".") == -1) {
+                        } else if (temp.toString().indexOf(".") == -1) {
                             // no decimal point placed yet
                             if (temp.length() > beforeDecimal) {
                                 return "";
@@ -88,14 +109,14 @@ public class SubActivity extends AppCompatActivity {
                                 return "";
                             }
                         }
-
                         return super.filter(source, start, end, dest, dstart, dend);
                     }
                 }
         });
 
-        //http://www.moo-code.me/en/2017/04/16/how-to-popup-datepicker-calendar/
-
+        // Taken from http://www.moo-code.me/en/2017/04/16/how-to-popup-datepicker-calendar/
+        // 2018-02-04
+        // Makes a popup calendar when a button is clicked for the user to choose a date
         long currentdate = System.currentTimeMillis();
         String dateString = sdf.format(currentdate);
         date = new DatePickerDialog.OnDateSetListener() {
@@ -112,7 +133,6 @@ public class SubActivity extends AppCompatActivity {
 
         // onclick - popup datepicker
         subDate.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View v) {
                 // TODO Auto-generated method stub
@@ -122,28 +142,31 @@ public class SubActivity extends AppCompatActivity {
             }
         });
 
+        // Return to previous activity and putExtra information when save button is clicked
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //Toast.makeText(view.getContext(), "hi", Toast.LENGTH_LONG).show();
-                //https://stackoverflow.com/questions/10407159/how-to-manage-startactivityforresult-on-android
+                // Taken from https://stackoverflow.com/questions/10407159/how-to-manage-startactivityforresult-on-android
+                // 2018-02-04
+                // Returns information needed to make a new subscription in the main activity
                 int valid = validateSubscription();
                 if (valid == 1) {
                     Intent returnIntent = new Intent();
                     name = subName.getText().toString();
                     price = subPrice.getText().toString();
                     comment = subComment.getText().toString();
-                    returnIntent.putExtra("name",name);
-                    returnIntent.putExtra("price",price);
-                    returnIntent.putExtra("date",sdf.format(myCalendar.getTime()));
-                    returnIntent.putExtra("comment",comment);
-                    returnIntent.putExtra("index",index);
-                    setResult(Activity.RESULT_OK,returnIntent);
+                    returnIntent.putExtra("name", name);
+                    returnIntent.putExtra("price", price);
+                    returnIntent.putExtra("date", sdf.format(myCalendar.getTime()));
+                    returnIntent.putExtra("comment", comment);
+                    returnIntent.putExtra("index", index);
+                    setResult(Activity.RESULT_OK, returnIntent);
                     finish();
                 }
             }
         });
 
+        // Return to previous activity when cancel button is clicked
         cancelButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -154,36 +177,45 @@ public class SubActivity extends AppCompatActivity {
         });
 
     }
+
     private void updateDate() {
         subDate.setText(sdf.format(myCalendar.getTime()));
         subDate.setError(null);
     }
 
-//comment < 30
-    private int validateSubscription(){
-        if (!TextUtils.isEmpty(subName.getText()) && !TextUtils.isEmpty(subPrice.getText()) && !subDate.getText().toString().equals("Date") && (TextUtils.getTrimmedLength(subName.getText())<=20)&& (TextUtils.getTrimmedLength(subComment.getText())<=30)) {
+    /**
+     * Validates all input fields are filled out correctly.
+     * Sets an error if incorrect
+     *
+     * @return 1 if valid
+     */
+    private int validateSubscription() {
+        if (!TextUtils.isEmpty(subName.getText()) &&
+                !TextUtils.isEmpty(subPrice.getText()) &&
+                !subDate.getText().toString().equals("Date") &&
+                (TextUtils.getTrimmedLength(subName.getText()) <= 20) &&
+                (TextUtils.getTrimmedLength(subComment.getText()) <= 30)) {
             return 1;
-        }else {
-            if (TextUtils.getTrimmedLength(subName.getText())>20) {
+        } else {
+            if (TextUtils.getTrimmedLength(subName.getText()) > 20) {
                 subName.setError("Name must be less than 20 characters");
             }
-            if (TextUtils.getTrimmedLength(subComment.getText())>30) {
+            if (TextUtils.getTrimmedLength(subComment.getText()) > 30) {
                 subComment.setError("Comment must be less than 30 characters");
             }
-            if(TextUtils.isEmpty(subName.getText())){
+            if (TextUtils.isEmpty(subName.getText())) {
                 subName.setError("Fields can not be left empty");
             }
-            if(TextUtils.isEmpty(subPrice.getText())){
+            if (TextUtils.isEmpty(subPrice.getText())) {
                 subPrice.setError("Fields can not be left empty");
-            }if(subDate.getText().toString().equals("Date")) {
+            }
+            if (subDate.getText().toString().equals("Date")) {
 
                 subDate.setError("Enter a Date");
-            }else{
+            } else {
                 subDate.setError(null);
             }
-
-    }
+        }
         return 0;
     }
-
 }
